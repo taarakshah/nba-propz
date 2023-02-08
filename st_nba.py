@@ -23,6 +23,7 @@ def fix_dates(df):
     date_df['DATE'] = pd.to_datetime(date_df['full'])
 
     df['DATE'] = date_df['DATE']
+    df['DATE'] = df['DATE'].dt.strftime('%Y-%m-%d')
     return df
 
 st.set_page_config(page_title='PROPZ v2.1.0', page_icon=':basketball:', layout="wide", initial_sidebar_state="auto", menu_items=None)
