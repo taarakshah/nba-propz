@@ -138,7 +138,7 @@ st.set_page_config(page_title='PROPZ v2.1.0', page_icon=':basketball:', layout="
 c1, c2 = st.columns(2)
 with c2:
     ## Button for getting new data from FantasyPros
-    newdata = st.checkbox('Gather new NBA player prop data', help='Gets new NBA player prop data from FantasyPros. Returns data of all players above 25 min/game.')
+    newdata = st.button('Gather new NBA player prop data', help='Gets new NBA player prop data from FantasyPros. Returns data of all players above 25 min/game.')
     if newdata:
         start = time.time()
         gamelog = get_new_data()
@@ -152,7 +152,8 @@ with c1:
     if newdata:
         st.write('Game log is current as of today.')
     else:
-        st.write('Game log is current as of Feb 6, 2023. Check the box to refresh. Will take approx ~90 seconds.')
+        st.write('Game log is current as of Feb 6, 2023.')
+        st.write('Check the box to refresh. Will take approx ~90 seconds.')
 
 
 st.markdown("<h1 style='text-align: center;'>NBA PROPZ 2.1.0</h1>", unsafe_allow_html=True)
