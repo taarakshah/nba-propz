@@ -135,7 +135,7 @@ def get_new_data():
     return gamelog
 
 st.set_page_config(page_title='PROPZ v2.1.0', page_icon=':basketball:', layout="wide", initial_sidebar_state="auto", menu_items=None)
-
+S = st.session_state()
 
 def main():
     c1, c2 = st.columns(2)
@@ -158,7 +158,6 @@ def main():
             st.write('Game log is current as of Feb 6, 2023.')
             st.write('Click the button to refresh. Will take approx ~90 seconds.')
 
-    S = st.session_state()
     S.gamelog = gamelog
 
 
