@@ -59,11 +59,12 @@ def get_new_data():
         soup = BeautifulSoup(r.content, 'html.parser')
         parsed = soup.find_all('tr')
         ## lists per player
-        dates, mins, fgms, fgas, tpms, tpas, ftms, ftas, rebs, asts, tos, stls, blks, pfs, pts, pras = [],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[]
+        dates, opps, mins, fgms, fgas, tpms, tpas, ftms, ftas, rebs, asts, tos, stls, blks, pfs, pts, pras = [],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[],[]
 
         for game in parsed:
             try:
                 date = game.find_all('td')[0].get_text()
+                opp = game.find_all('td')[1].get_text()
                 min = int(game.find_all('td')[3].get_text())
                 fgm = int(game.find_all('td')[4].get_text())
                 fga = int(game.find_all('td')[5].get_text())
@@ -81,6 +82,7 @@ def get_new_data():
                 pra = pt+reb+ast
                 ## save all to list
                 dates.append(date)
+                opps.append(opp)
                 mins.append(min)
                 fgms.append(fgm)
                 fgas.append(fga)
@@ -99,8 +101,8 @@ def get_new_data():
             except: pass
 
             ## make it a dataframe
-            minilog = pd.DataFrame(list(zip(dates, mins, fgms, fgas, tpms, tpas, ftms, ftas, rebs, asts, tos, stls, blks, pfs, pts, pras)),
-                                columns=['DATE','MIN','FGM','FGA','3PM','3PA','FTM','FTA','REB','AST','TO','STL','BLK','PF','PTS','PRA'])
+            minilog = pd.DataFrame(list(zip(dates, opps, mins, fgms, fgas, tpms, tpas, ftms, ftas, rebs, asts, tos, stls, blks, pfs, pts, pras)),
+                                columns=['DATE','OPP', 'MIN','FGM','FGA','3PM','3PA','FTM','FTA','REB','AST','TO','STL','BLK','PF','PTS','PRA'])
         player_name = players['name'][i]
         player_team = players['team'][i]
         minilog['NAME'] = player_name
