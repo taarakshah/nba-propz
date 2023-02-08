@@ -134,27 +134,25 @@ def get_new_data():
     return gamelog
 
 st.set_page_config(page_title='PROPZ v2.1.0', page_icon=':basketball:', layout="wide", initial_sidebar_state="auto", menu_items=None)
-S = st.session_state
-
 
 c1, c2 = st.columns(2)
 with c2:
     ## Button for getting new data from FantasyPros
-    newdata = st.button('Gather new NBA player prop data', help='Gets new NBA player prop data from FantasyPros. Returns data of all players above 25 min/game.')
+    newdata = st.checkbox('Gather new NBA player prop data', help='Gets new NBA player prop data from FantasyPros. Returns data of all players above 25 min/game.')
     if newdata:
         start = time.time()
-        S.gamelog = get_new_data()
+        gamelog = get_new_data()
         end = time.time()
         st.write('New game log took {} seconds to gather.'.format( np.round(end-start,1) ) )
     else:
         ## read in default gamelog
-        S.gamelog = pd.read_csv('gamelog.csv')
-        S.gamelog = fix_dates(S.gamelog)
+        gamelog = pd.read_csv('gamelog.csv')
+        gamelog = fix_dates(gamelog)
 with c1:
     if newdata:
         st.write('Game log is current as of today.')
     else:
-        st.write('Game log is current as of Feb 6, 2023. Click button to refresh. Will take approx ~90 seconds.')
+        st.write('Game log is current as of Feb 6, 2023. Check the box to refresh. Will take approx ~90 seconds.')
 
 
 st.markdown("<h1 style='text-align: center;'>NBA PROPZ 2.1.0</h1>", unsafe_allow_html=True)
@@ -173,15 +171,15 @@ def convert_df(df):
 st.sidebar.markdown("## Options Menu")
 
 ## get unique teams
-teams_list = S.gamelog['TEAM'].unique().tolist()
+teams_list = gamelog['TEAM'].unique().tolist()
 ## team option
 team_subset = st.sidebar.selectbox('Team', options=['Choose Team'] + teams_list)
 
 ## if a team is chosen, only show players from that team
 if team_subset=='Choose Team':
-    player_list = S.gamelog['NAME'].unique().tolist()
+    player_list = gamelog['NAME'].unique().tolist()
 else:
-    player_list = S.gamelog[S.gamelog['TEAM']==team_subset]['NAME'].unique().tolist()
+    player_list = gamelog[gamelog['TEAM']==team_subset]['NAME'].unique().tolist()
 ## player option
 player_subset = st.sidebar.selectbox('Player', options=['Choose Player'] + player_list)
 
@@ -205,9 +203,9 @@ with c5: plot_pra = st.button('Pts/Reb/Ast')
 ## Print trends
 if player_subset!='Choose Player':
     st.header('{} has hit...'.format(player_subset))
-    l5 = S.gamelog[S.gamelog['NAME']==player_subset].head(5)
-    l10 = S.gamelog[S.gamelog['NAME']==player_subset].head(10)
-    l25 = S.gamelog[S.gamelog['NAME']==player_subset].head(25)
+    l5 = gamelog[gamelog['NAME']==player_subset].head(5)
+    l10 = gamelog[gamelog['NAME']==player_subset].head(10)
+    l25 = gamelog[gamelog['NAME']==player_subset].head(25)
 
     st.write('...over {} points in {}/5, {}/10, and {}/25'.format(thres_pts, sum(l5['PTS'] >= thres_pts), sum(l10['PTS'] >= thres_pts), sum(l25['PTS'] >= thres_pts) ) )
     st.write('...over {} rebounds in {}/5, {}/10, and {}/25'.format(thres_reb, sum(l5['REB'] >= thres_reb), sum(l10['REB'] >= thres_reb), sum(l25['REB'] >= thres_reb) ) )
@@ -222,14 +220,14 @@ st.write('If a player is chosen with the filter menu on the left, it will show t
 ## Consider all cases for displaying data
 ## Do not choose team or player -> show full log
 if (team_subset=='Choose Team') & (player_subset=='Choose Player'):
-    st.dataframe(S.gamelog)
+    st.dataframe(gamelog)
 ## Choose team but not a player -> show log for all players on chosen team
 elif (team_subset!='Choose Team') & (player_subset=='Choose Player'):
-    st.dataframe(S.gamelog[S.gamelog.TEAM==team_subset].reset_index(drop=True))
+    st.dataframe(gamelog[gamelog.TEAM==team_subset].reset_index(drop=True))
 ## Choose player -> show log for chosen player
 elif player_subset!='Choose Player':
-    st.dataframe(S.gamelog[S.gamelog.NAME==player_subset].reset_index(drop=True))
+    st.dataframe(gamelog[gamelog.NAME==player_subset].reset_index(drop=True))
 
 ## Button for downloading gamelog data to CSV
-gamelog_csv = convert_df(S.gamelog)
+gamelog_csv = convert_df(gamelog)
 st.download_button("Download CSV of full game log for all players", gamelog_csv, "gamelog.csv", "text/csv", key='download-csv')
