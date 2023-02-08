@@ -27,6 +27,10 @@ def fix_dates(df):
 
 st.set_page_config(page_title='PROPZ v2.1.0', page_icon=':basketball:', layout="wide", initial_sidebar_state="auto", menu_items=None)
 
+## load the gamelog
+
+gamelog = pd.read_csv('gamelog.csv')
+
 c1, c2 = st.columns(2)
 with c1:
         st.write('Game log is current as of: {}'.format( gamelog['DATE'].max() ) )
