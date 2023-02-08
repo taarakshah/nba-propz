@@ -30,6 +30,7 @@ st.set_page_config(page_title='PROPZ v2.1.0', page_icon=':basketball:', layout="
 ## load the gamelog
 
 gamelog = pd.read_csv('gamelog.csv')
+gamelog = fix_dates(gamelog)
 
 c1, c2 = st.columns(2)
 with c1:
