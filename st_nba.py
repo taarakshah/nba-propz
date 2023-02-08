@@ -31,11 +31,10 @@ st.set_page_config(page_title='PROPZ v2.1.0', page_icon=':basketball:', layout="
 
 gamelog = pd.read_csv('gamelog.csv')
 gamelog = fix_dates(gamelog)
-gamelog['DATE'] = gamelog['DATE'].dt.strftime('%YYYY-%MM-%DD')
 
 c1, c2 = st.columns(2)
 with c1:
-        st.write('Game log is current as of: {}'.format( gamelog['DATE'].max() ) )
+        st.write('Game log is current as of: {}'.format( gamelog['DATE'].max().dt.strftime('%B%m%Y') ) )
 
 st.markdown("<h1 style='text-align: center;'>NBA PROPZ 2.1.0</h1>", unsafe_allow_html=True)
 hide_menu_style = """
