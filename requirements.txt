@@ -1,0 +1,7 @@
+streamlit
+pandas
+plotly
+plotly.express
+requests
+bs4
+time
