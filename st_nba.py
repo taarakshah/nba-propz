@@ -171,7 +171,7 @@ def main():
     st.markdown(hide_menu_style, unsafe_allow_html=True)
 
     def convert_df(df):
-    return df.to_csv(index=False).encode('utf-8')
+        return df.to_csv(index=False).encode('utf-8')
 
 
     ## SIDEBAR / OPTIONS MENU
