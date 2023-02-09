@@ -25,7 +25,9 @@ def fix_dates(df):
     df['DATE'] = date_df['DATE']
     return df
 
-st.set_page_config(page_title='PROPZ v2.1.0', page_icon=':basketball:', layout="wide", initial_sidebar_state="auto", menu_items=None)
+st.set_page_config(page_title='PROPZ v2.2.0', page_icon=':basketball:', layout="wide", initial_sidebar_state="auto", menu_items=None)
+st.write('<style>div.block-container{padding-top:0rem;}</style>', unsafe_allow_html=True)
+
 
 ## load the gamelog
 
@@ -34,16 +36,16 @@ gamelog = fix_dates(gamelog)
 
 c1, c2 = st.columns(2)
 with c1:
-        st.write('Game log is current as of: {}'.format( gamelog['DATE'].max().strftime('%b %-d, %Y') ) )
+    pass
+    #st.write('Game log is current as of: {}'.format( gamelog['DATE'].max().strftime('%b %-d, %Y') ) )
 
-st.markdown("<h1 style='text-align: center;'>NBA PROPZ 2.1.0</h1>", unsafe_allow_html=True)
+st.markdown("<h1 style='text-align: center;'>NBA PROPZ 2.2.0</h1>", unsafe_allow_html=True)
 hide_menu_style = """
         <style>
         #MainMenu {visibility: hidden;}
         </style>
         """
 st.markdown(hide_menu_style, unsafe_allow_html=True)
-
 def convert_df(df):
     return df.to_csv(index=False).encode('utf-8')
 
@@ -64,22 +66,62 @@ else:
 ## player option
 player_subset = st.sidebar.selectbox('Player', options=['Choose Player'] + player_list)
 
+
+## @TODO:
+#st.header("Today's Slate: ")
+
+## @TODO:
+#st.header('Suggested Props for the Games Today')
+#st.write('Coming soon')
+
+c1, _ = st.columns(2)
+with c1:
+    if player_subset!='Choose Player':
+        plotbox = st.sidebar.selectbox(label='Show Plots', options=['All Stats','Points','Rebounds','Assists','Threes','Pts/Reb/Ast'])
+
+## if any player is chosen, subset to only that player's trends
+## x-axis Dates, y-axis is stat of choice
+def gen_plotly(log, stat):
+    '''
+    Input: 'stat' is 'PTS','REB','AST','3PM','PRA'
+    '''
+    color_dict = {'PTS':'#E41A1C', 'REB':'#3773B8', 'AST':'#4DAF4A', '3PM':'#FF7F00','PRA':'#984EA3'}
+    name_dict = {'PTS':'Points', 'REB':'Rebounds', 'AST':'Assists','3PM':'Threes','PRA':'Pts/Reb/Ast'}
+
+    fig = px.line(x = log['DATE'], y = log[stat], title=player_subset, labels={'x':'Date','y':name_dict[stat]})
+    fig['data'][0]['showlegend']=True
+    fig['data'][0]['name']=name_dict[stat]
+    fig['data'][0]['line']['color']=color_dict[stat]
+    fig.update_layout(hovermode='x unified')
+    st.plotly_chart(fig, use_container_width=True)
+
+try:
+    playerlog = gamelog[gamelog['NAME']==player_subset].sort_values(by='DATE')
+    if plotbox=='All Stats':
+        fig = px.line(x = playerlog['DATE'], y = playerlog['PTS'], title=player_subset,labels={'x':'Date', 'y':''})
+        fig['data'][0]['showlegend']=True
+        fig['data'][0]['name']='Points'
+        fig['data'][0]['line']['color']='#E41A1C'
+        fig.add_scatter(x = playerlog['DATE'], y = playerlog['REB'], name='Rebounds', line_color='#3773B8')
+        fig.add_scatter(x = playerlog['DATE'], y = playerlog['AST'], name='Assists', line_color='#4DAF4A')
+        fig.add_scatter(x = playerlog['DATE'], y = playerlog['3PM'], name='Threes', line_color='#FF7F00')
+        fig.add_scatter(x = playerlog['DATE'], y = playerlog['PRA'], name='PRA', line_color='#984EA3')
+        fig.update_layout(hovermode='x unified')
+        st.plotly_chart(fig, use_container_width=True)
+    if plotbox=='Points': gen_plotly(playerlog, 'PTS')
+    if plotbox=='Rebounds': gen_plotly(playerlog, 'REB')
+    if plotbox=='Assists': gen_plotly(playerlog, 'AST')
+    if plotbox=='Threes': gen_plotly(playerlog, '3PM')
+    if plotbox=='Pts/Reb/Ast': gen_plotly(playerlog, 'PRA')
+except: pass
+
+
 ## prop sliders
 thres_pts = st.sidebar.number_input('Points', value=19.5, step=1.0, help='Adjust threshold for points to compare prop trends.')
 thres_reb = st.sidebar.number_input('Rebounds', value=5.5, step=1.0, help='Adjust threshold for rebounds to compare prop trends.')
 thres_ast = st.sidebar.number_input('Assists', value=3.5, step=1.0, help='Adjust threshold for assists to compare prop trends.')
 thres_3pm = st.sidebar.number_input('Threes', value=1.5, step=1.0, help='Adjust threshold for threes to compare prop trends.')
 thres_pra = st.sidebar.number_input('Pts/Reb/Ast', value=24.5, step=1.0, help='Adjust threshold for PRA to compare prop trends.')
-
-
-st.header('Show Plots Over Time')
-c1,c2,c3,c4,c5 = st.columns(5)
-with c1: plot_pts = st.button('Points')
-with c2: plot_reb = st.button('Rebounds')
-with c3: plot_ast = st.button('Assists')
-with c4: plot_3pm = st.button('Threes')
-with c5: plot_pra = st.button('Pts/Reb/Ast')
-
 
 ## Print trends
 if player_subset!='Choose Player':
@@ -93,6 +135,9 @@ if player_subset!='Choose Player':
     st.write('...over {} assists in {}/5, {}/10, and {}/25'.format(thres_ast, sum(l5['AST'] >= thres_ast), sum(l10['AST'] >= thres_ast), sum(l25['AST'] >= thres_ast) ) )
     st.write('...over {} threes in {}/5, {}/10, and {}/25'.format(thres_3pm, sum(l5['3PM'] >= thres_3pm), sum(l10['3PM'] >= thres_3pm), sum(l25['3PM'] >= thres_3pm) ) )
     st.write('...over {} PRA in {}/5, {}/10, and {}/25'.format(thres_pra, sum(l5['PRA'] >= thres_pra), sum(l10['PRA'] >= thres_pra), sum(l25['PRA'] >= thres_pra) ) )
+
+
+
 
 ## Associated detailed data / descriptions
 st.header('Full Game Log for Chosen Player')
