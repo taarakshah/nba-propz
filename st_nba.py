@@ -25,6 +25,39 @@ def fix_dates(df):
     df['DATE'] = date_df['DATE']
     return df
 
+def get_today_slate():
+    url = 'https://www.espn.com/nba/lines'
+    r = requests.get(url)
+    soup = BeautifulSoup(r.content, 'html.parser')
+    parsed = soup.find_all('tr')
+
+    names, records, mls = [], [], []
+    for game in parsed:
+        try:
+            name = game.find_all('td')[0].get_text()
+            record = game.find_all('td')[1].get_text()
+            ml = game.find_all('td')[3].get_text()
+
+            names.append(name)
+            records.append(record)
+            mls.append(ml)
+        except: pass
+
+    i=0
+    home, away, homerec, awayrec, homeml, awayml = [], [], [], [], [], []
+    for name, record, ml in zip(names, records, mls):
+        i=i+1
+        if i % 2 == 0:
+            home.append(name)
+            homerec.append(record)
+            homeml.append(ml)
+        else:
+            away.append(name)
+            awayrec.append(record)
+            awayml.append(ml)
+
+    return pd.DataFrame({'away':away,'home':home, 'awayrec':awayrec, 'homerec':homerec, 'awayml':awayml, 'homeml':homeml})
+
 st.set_page_config(page_title='PROPZ v2.4.0', page_icon=':basketball:', layout="wide", initial_sidebar_state="auto", menu_items=None)
 st.write('<style>div.block-container{padding-top:0rem;}</style>', unsafe_allow_html=True)
 
@@ -66,41 +99,7 @@ else:
 ## player option
 player_subset = st.sidebar.selectbox('Player', options=['Choose Player'] + player_list)
 
-
-def get_today_slate():
-    url = 'https://www.espn.com/nba/lines'
-    r = requests.get(url)
-    soup = BeautifulSoup(r.content, 'html.parser')
-    parsed = soup.find_all('tr')
-
-    names, records, mls = [], [], []
-    for game in parsed:
-        try:
-            name = game.find_all('td')[0].get_text()
-            record = game.find_all('td')[1].get_text()
-            ml = game.find_all('td')[3].get_text()
-
-            names.append(name)
-            records.append(record)
-            mls.append(ml)
-        except: pass
-
-    i=0
-    home, away, homerec, awayrec, homeml, awayml = [], [], [], [], [], []
-    for name, record, ml in zip(names, records, mls):
-        i=i+1
-        if i % 2 == 0:
-            home.append(name)
-            homerec.append(record)
-            homeml.append(ml)
-        else:
-            away.append(name)
-            awayrec.append(record)
-            awayml.append(ml)
-
-    return pd.DataFrame({'away':away,'home':home, 'awayrec':awayrec, 'homerec':homerec, 'awayml':awayml, 'homeml':homeml})
-
-st.markdown("<h2 style='text-align: center;'>Today's Slate</h2>", unsafe_allow_html=True)
+st.markdown("<h2 style='text-align: center;'>Today's Slate: {}</h2>".format(date.today()), unsafe_allow_html=True)
 today = get_today_slate()
 c1, c2, c3 = st.columns(3)
 with c1:
