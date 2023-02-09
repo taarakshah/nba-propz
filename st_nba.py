@@ -37,7 +37,6 @@ gamelog['HOME/AWAY'] = np.where(gamelog['OPP'].str.contains('@'), 'AWAY', 'HOME'
 
 c1, c2 = st.columns(2)
 with c1:
-    pass
     st.write('Game log is current as of: {}'.format( gamelog['DATE'].max().strftime('%b %-d, %Y') ) )
 
 st.markdown("<h1 style='text-align: center;'>NBA PROPZ 2.4.0</h1>", unsafe_allow_html=True)
