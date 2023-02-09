@@ -35,10 +35,6 @@ gamelog = pd.read_csv('gamelog.csv')
 gamelog = fix_dates(gamelog)
 gamelog['HOME/AWAY'] = np.where(gamelog['OPP'].str.contains('@'), 'AWAY', 'HOME')
 
-c1, c2 = st.columns(2)
-with c1:
-    st.write('Game log is current as of: {}'.format( gamelog['DATE'].max().strftime('%b %-d, %Y') ) )
-
 st.markdown("<h1 style='text-align: center;'>NBA PROPZ 2.4.0</h1>", unsafe_allow_html=True)
 hide_menu_style = """
         <style>
@@ -48,6 +44,10 @@ hide_menu_style = """
 st.markdown(hide_menu_style, unsafe_allow_html=True)
 def convert_df(df):
     return df.to_csv(index=False).encode('utf-8')
+
+c1, c2 = st.columns(2)
+with c1:
+    st.write('Game log is current as of: {}'.format( gamelog['DATE'].max().strftime('%b %-d, %Y') ) )
 
 
 ## SIDEBAR / OPTIONS MENU
