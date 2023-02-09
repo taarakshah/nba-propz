@@ -173,7 +173,7 @@ thres_3pm = st.sidebar.number_input('Threes', value=1.5, step=1.0, help='Adjust 
 thres_pra = st.sidebar.number_input('Pts/Reb/Ast', value=24.5, step=1.0, help='Adjust threshold for PRA to compare prop trends.')
 
 ## Print trends
-if player_subset!= 'Choose Player:':
+if player_subset != 'Choose Player':
     st.header('{} has hit...'.format(player_subset))
     c1,c2,c3 = st.columns(3)
     with c1:
