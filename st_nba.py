@@ -103,14 +103,14 @@ st.markdown("<h2 style='text-align: center;'>Today's Slate</h2>", unsafe_allow_h
 today = get_today_slate()
 c1, c2, c3 = st.columns(3)
 with c1:
-    st.markdown("<h6 style='text-align: center;'>Home Team, Record (ATS) (ML Odds)", unsafe_allow_html=True)
+    st.markdown("<h6 style='text-align: center;'>(ML Odds) (ATS) Record, Home Team", unsafe_allow_html=True)
 with c2:
     st.markdown("<h6 style='text-align: center;'>@", unsafe_allow_html=True)
 with c3:
     st.markdown("<h6 style='text-align: center;'>Away Team, Record (ATS) (ML Odds)", unsafe_allow_html=True)
 for i, row in today.iterrows():
     with c1:
-        st.markdown("<h6 style='text-align: center;'>{} {} ({})".format(row.away, row.awayrec, row.awayml), unsafe_allow_html=True)
+        st.markdown("<h6 style='text-align: center;'>({}) {}, {}".format(row.awayml, row.awayrec, row.away), unsafe_allow_html=True)
     with c2:
         st.markdown("<h6 style='text-align: center;'>@", unsafe_allow_html=True)
     with c3:
