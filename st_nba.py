@@ -58,7 +58,7 @@ def get_today_slate():
 
     return pd.DataFrame({'away':away,'home':home, 'awayrec':awayrec, 'homerec':homerec, 'awayml':awayml, 'homeml':homeml})
 
-st.set_page_config(page_title='PROPZ v2.5.0', page_icon=':basketball:', layout="wide", initial_sidebar_state="auto", menu_items=None)
+st.set_page_config(page_title='PROPZ v2.6.0', page_icon=':basketball:', layout="wide", initial_sidebar_state="auto", menu_items=None)
 st.write('<style>div.block-container{padding-top:0rem;}</style>', unsafe_allow_html=True)
 
 
@@ -68,7 +68,7 @@ gamelog = pd.read_csv('gamelog.csv')
 gamelog = fix_dates(gamelog)
 gamelog['HOME/AWAY'] = np.where(gamelog['OPP'].str.contains('@'), 'AWAY', 'HOME')
 
-st.markdown("<h1 style='text-align: center;'>NBA PROPZ 2.5.0</h1>", unsafe_allow_html=True)
+st.markdown("<h1 style='text-align: center;'>NBA PROPZ 2.6.0</h1>", unsafe_allow_html=True)
 hide_menu_style = """
         <style>
         #MainMenu {visibility: hidden;}
@@ -77,11 +77,6 @@ hide_menu_style = """
 st.markdown(hide_menu_style, unsafe_allow_html=True)
 def convert_df(df):
     return df.to_csv(index=False).encode('utf-8')
-
-c1, c2 = st.columns(2)
-with c1:
-    st.write('Game log is current as of: {}'.format( gamelog['DATE'].max().strftime('%b %d, %Y') ) )
-
 
 ## SIDEBAR / OPTIONS MENU
 st.sidebar.markdown("## Options Menu")
@@ -154,11 +149,11 @@ except: pass
 
 
 ## prop sliders
-thres_pts = st.sidebar.number_input('Points', value=19.5, step=1.0, help='Adjust threshold for points to compare prop trends.')
-thres_reb = st.sidebar.number_input('Rebounds', value=5.5, step=1.0, help='Adjust threshold for rebounds to compare prop trends.')
-thres_ast = st.sidebar.number_input('Assists', value=3.5, step=1.0, help='Adjust threshold for assists to compare prop trends.')
-thres_3pm = st.sidebar.number_input('Threes', value=1.5, step=1.0, help='Adjust threshold for threes to compare prop trends.')
-thres_pra = st.sidebar.number_input('Pts/Reb/Ast', value=24.5, step=1.0, help='Adjust threshold for PRA to compare prop trends.')
+thres_pts = st.sidebar.number_input('Points', value=19.5, step=1.0, help='Adjust threshold for points to compare prop trends.', format='%f')
+thres_reb = st.sidebar.number_input('Rebounds', value=5.5, step=1.0, help='Adjust threshold for rebounds to compare prop trends.', format='%f')
+thres_ast = st.sidebar.number_input('Assists', value=3.5, step=1.0, help='Adjust threshold for assists to compare prop trends.', format='%f')
+thres_3pm = st.sidebar.number_input('Threes', value=1.5, step=1.0, help='Adjust threshold for threes to compare prop trends.', format='%f')
+thres_pra = st.sidebar.number_input('Pts/Reb/Ast', value=24.5, step=1.0, help='Adjust threshold for PRA to compare prop trends.', format='%f')
 
 ## Print trends
 if player_subset != 'Choose Player':
@@ -206,6 +201,8 @@ if player_subset != 'Choose Player':
 ## Associated detailed data / descriptions
 st.header('Full Game Log for Chosen Player')
 st.write('If a player is chosen with the filter menu on the left, it will show the game log of that player. Otherwise, it will show the full game log for all possible players and teams.')
+st.write('Game log is current as of: {}'.format( gamelog['DATE'].max().strftime('%b %d, %Y') ) )
+
 
 ## Consider all cases for displaying data
 ## Do not choose team or player -> show full log
