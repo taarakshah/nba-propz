@@ -25,7 +25,7 @@ def fix_dates(df):
     df['DATE'] = date_df['DATE']
     return df
 
-st.set_page_config(page_title='PROPZ v2.2.0', page_icon=':basketball:', layout="wide", initial_sidebar_state="auto", menu_items=None)
+st.set_page_config(page_title='PROPZ v2.4.0', page_icon=':basketball:', layout="wide", initial_sidebar_state="auto", menu_items=None)
 st.write('<style>div.block-container{padding-top:0rem;}</style>', unsafe_allow_html=True)
 
 
@@ -33,13 +33,14 @@ st.write('<style>div.block-container{padding-top:0rem;}</style>', unsafe_allow_h
 
 gamelog = pd.read_csv('gamelog.csv')
 gamelog = fix_dates(gamelog)
+gamelog['HOME/AWAY'] = np.where(gamelog['OPP'].str.contains('@'), 'AWAY', 'HOME')
 
 c1, c2 = st.columns(2)
 with c1:
     pass
-    #st.write('Game log is current as of: {}'.format( gamelog['DATE'].max().strftime('%b %-d, %Y') ) )
+    st.write('Game log is current as of: {}'.format( gamelog['DATE'].max().strftime('%b %-d, %Y') ) )
 
-st.markdown("<h1 style='text-align: center;'>NBA PROPZ 2.2.0</h1>", unsafe_allow_html=True)
+st.markdown("<h1 style='text-align: center;'>NBA PROPZ 2.4.0</h1>", unsafe_allow_html=True)
 hide_menu_style = """
         <style>
         #MainMenu {visibility: hidden;}
@@ -67,11 +68,59 @@ else:
 player_subset = st.sidebar.selectbox('Player', options=['Choose Player'] + player_list)
 
 
-## @TODO:
-#st.header("Today's Slate: ")
+def get_today_slate():
+    url = 'https://www.espn.com/nba/lines'
+    r = requests.get(url)
+    soup = BeautifulSoup(r.content, 'html.parser')
+    parsed = soup.find_all('tr')
+
+    names, records, mls = [], [], []
+    for game in parsed:
+        try:
+            name = game.find_all('td')[0].get_text()
+            record = game.find_all('td')[1].get_text()
+            ml = game.find_all('td')[3].get_text()
+
+            names.append(name)
+            records.append(record)
+            mls.append(ml)
+        except: pass
+
+    i=0
+    home, away, homerec, awayrec, homeml, awayml = [], [], [], [], [], []
+    for name, record, ml in zip(names, records, mls):
+        i=i+1
+        if i % 2 == 0:
+            home.append(name)
+            homerec.append(record)
+            homeml.append(ml)
+        else:
+            away.append(name)
+            awayrec.append(record)
+            awayml.append(ml)
+
+    return pd.DataFrame({'away':away,'home':home, 'awayrec':awayrec, 'homerec':homerec, 'awayml':awayml, 'homeml':homeml})
+
+st.markdown("<h2 style='text-align: center;'>Today's Slate</h2>", unsafe_allow_html=True)
+today = get_today_slate()
+c1, c2, c3 = st.columns(3)
+with c1:
+    st.markdown("<h6 style='text-align: center;'>Home Team, Record (ATS) (ML Odds)", unsafe_allow_html=True)
+with c2:
+    st.markdown("<h6 style='text-align: center;'>@", unsafe_allow_html=True)
+with c3:
+    st.markdown("<h6 style='text-align: center;'>Away Team, Record (ATS) (ML Odds)", unsafe_allow_html=True)
+for i, row in today.iterrows():
+    with c1:
+        st.markdown("<h6 style='text-align: center;'>{} {} ({})".format(row.away, row.awayrec, row.awayml), unsafe_allow_html=True)
+    with c2:
+        st.markdown("<h6 style='text-align: center;'>@", unsafe_allow_html=True)
+    with c3:
+        st.markdown("<h6 style='text-align: center;'>{} {} ({})".format(row.home, row.homerec, row.homeml), unsafe_allow_html=True)
+
 
 ## @TODO:
-#st.header('Suggested Props for the Games Today')
+#st.header("Suggested Props for Today's Slate")
 #st.write('Coming soon')
 
 c1, _ = st.columns(2)
@@ -124,17 +173,44 @@ thres_3pm = st.sidebar.number_input('Threes', value=1.5, step=1.0, help='Adjust 
 thres_pra = st.sidebar.number_input('Pts/Reb/Ast', value=24.5, step=1.0, help='Adjust threshold for PRA to compare prop trends.')
 
 ## Print trends
-if player_subset!='Choose Player':
+if player_subset!= 'Choose Player:':
     st.header('{} has hit...'.format(player_subset))
-    l5 = gamelog[gamelog['NAME']==player_subset].head(5)
-    l10 = gamelog[gamelog['NAME']==player_subset].head(10)
-    l25 = gamelog[gamelog['NAME']==player_subset].head(25)
+    c1,c2,c3 = st.columns(3)
+    with c1:
+        st.subheader('...in all games:')
+        l5 = gamelog[gamelog['NAME']==player_subset].head(5)
+        l10 = gamelog[gamelog['NAME']==player_subset].head(10)
+        l25 = gamelog[gamelog['NAME']==player_subset].head(25)
 
-    st.write('...over {} points in {}/5, {}/10, and {}/25'.format(thres_pts, sum(l5['PTS'] >= thres_pts), sum(l10['PTS'] >= thres_pts), sum(l25['PTS'] >= thres_pts) ) )
-    st.write('...over {} rebounds in {}/5, {}/10, and {}/25'.format(thres_reb, sum(l5['REB'] >= thres_reb), sum(l10['REB'] >= thres_reb), sum(l25['REB'] >= thres_reb) ) )
-    st.write('...over {} assists in {}/5, {}/10, and {}/25'.format(thres_ast, sum(l5['AST'] >= thres_ast), sum(l10['AST'] >= thres_ast), sum(l25['AST'] >= thres_ast) ) )
-    st.write('...over {} threes in {}/5, {}/10, and {}/25'.format(thres_3pm, sum(l5['3PM'] >= thres_3pm), sum(l10['3PM'] >= thres_3pm), sum(l25['3PM'] >= thres_3pm) ) )
-    st.write('...over {} PRA in {}/5, {}/10, and {}/25'.format(thres_pra, sum(l5['PRA'] >= thres_pra), sum(l10['PRA'] >= thres_pra), sum(l25['PRA'] >= thres_pra) ) )
+        st.write('...over {} points in {}/5, {}/10, and {}/25'.format(thres_pts, sum(l5['PTS'] >= thres_pts), sum(l10['PTS'] >= thres_pts), sum(l25['PTS'] >= thres_pts) ) )
+        st.write('...over {} rebounds in {}/5, {}/10, and {}/25'.format(thres_reb, sum(l5['REB'] >= thres_reb), sum(l10['REB'] >= thres_reb), sum(l25['REB'] >= thres_reb) ) )
+        st.write('...over {} assists in {}/5, {}/10, and {}/25'.format(thres_ast, sum(l5['AST'] >= thres_ast), sum(l10['AST'] >= thres_ast), sum(l25['AST'] >= thres_ast) ) )
+        st.write('...over {} threes in {}/5, {}/10, and {}/25'.format(thres_3pm, sum(l5['3PM'] >= thres_3pm), sum(l10['3PM'] >= thres_3pm), sum(l25['3PM'] >= thres_3pm) ) )
+        st.write('...over {} PRA in {}/5, {}/10, and {}/25'.format(thres_pra, sum(l5['PRA'] >= thres_pra), sum(l10['PRA'] >= thres_pra), sum(l25['PRA'] >= thres_pra) ) )
+    with c2:
+        st.subheader('...at home:')
+        gamelog_home = gamelog[gamelog['HOME/AWAY']=='HOME']
+        l5 = gamelog_home[gamelog_home['NAME']==player_subset].head(5)
+        l10 = gamelog_home[gamelog_home['NAME']==player_subset].head(10)
+        l25 = gamelog_home[gamelog_home['NAME']==player_subset].head(25)
+
+        st.write('...over {} points in {}/5, {}/10, and {}/25'.format(thres_pts, sum(l5['PTS'] >= thres_pts), sum(l10['PTS'] >= thres_pts), sum(l25['PTS'] >= thres_pts) ) )
+        st.write('...over {} rebounds in {}/5, {}/10, and {}/25'.format(thres_reb, sum(l5['REB'] >= thres_reb), sum(l10['REB'] >= thres_reb), sum(l25['REB'] >= thres_reb) ) )
+        st.write('...over {} assists in {}/5, {}/10, and {}/25'.format(thres_ast, sum(l5['AST'] >= thres_ast), sum(l10['AST'] >= thres_ast), sum(l25['AST'] >= thres_ast) ) )
+        st.write('...over {} threes in {}/5, {}/10, and {}/25'.format(thres_3pm, sum(l5['3PM'] >= thres_3pm), sum(l10['3PM'] >= thres_3pm), sum(l25['3PM'] >= thres_3pm) ) )
+        st.write('...over {} PRA in {}/5, {}/10, and {}/25'.format(thres_pra, sum(l5['PRA'] >= thres_pra), sum(l10['PRA'] >= thres_pra), sum(l25['PRA'] >= thres_pra) ) )
+    with c3:
+        st.subheader('...on the road:')
+        gamelog_away = gamelog[gamelog['HOME/AWAY']=='AWAY']
+        l5 = gamelog_away[gamelog_away['NAME']==player_subset].head(5)
+        l10 = gamelog_away[gamelog_away['NAME']==player_subset].head(10)
+        l25 = gamelog_away[gamelog_away['NAME']==player_subset].head(25)
+
+        st.write('...over {} points in {}/5, {}/10, and {}/25'.format(thres_pts, sum(l5['PTS'] >= thres_pts), sum(l10['PTS'] >= thres_pts), sum(l25['PTS'] >= thres_pts) ) )
+        st.write('...over {} rebounds in {}/5, {}/10, and {}/25'.format(thres_reb, sum(l5['REB'] >= thres_reb), sum(l10['REB'] >= thres_reb), sum(l25['REB'] >= thres_reb) ) )
+        st.write('...over {} assists in {}/5, {}/10, and {}/25'.format(thres_ast, sum(l5['AST'] >= thres_ast), sum(l10['AST'] >= thres_ast), sum(l25['AST'] >= thres_ast) ) )
+        st.write('...over {} threes in {}/5, {}/10, and {}/25'.format(thres_3pm, sum(l5['3PM'] >= thres_3pm), sum(l10['3PM'] >= thres_3pm), sum(l25['3PM'] >= thres_3pm) ) )
+        st.write('...over {} PRA in {}/5, {}/10, and {}/25'.format(thres_pra, sum(l5['PRA'] >= thres_pra), sum(l10['PRA'] >= thres_pra), sum(l25['PRA'] >= thres_pra) ) )
 
 
 
