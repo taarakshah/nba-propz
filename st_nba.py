@@ -99,7 +99,7 @@ else:
 ## player option
 player_subset = st.sidebar.selectbox('Player', options=['Choose Player'] + player_list)
 
-st.markdown("<h2 style='text-align: center;'>Today's Slate: {}</h2>".format(date.today()), unsafe_allow_html=True)
+st.markdown("<h2 style='text-align: center;'>Today's Slate</h2>", unsafe_allow_html=True)
 today = get_today_slate()
 c1, c2, c3 = st.columns(3)
 with c1:
