@@ -101,7 +101,7 @@ player_subset = st.sidebar.selectbox('Player', options=['Choose Player'] + playe
 
 st.markdown("<h2 style='text-align: center;'>Today's Slate</h2>", unsafe_allow_html=True)
 today = get_today_slate()
-c1, c2, c3 = st.columns(3)
+c1, c2, c3 = st.columns(3, gap='small')
 with c1:
     st.markdown("<h6 style='text-align: center;'>(ML Odds) (ATS) Record, Home Team", unsafe_allow_html=True)
 with c2:
