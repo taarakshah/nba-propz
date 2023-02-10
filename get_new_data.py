@@ -39,7 +39,7 @@ def get_new_data():
     ## make it a dataframe
     players = pd.DataFrame(list(zip(names, teams, hrefs, mpgs)), columns=['name','team', 'href','mpg'])
 
-    players25 = players[players['mpg'] >= 15.0].sort_values(by='team').reset_index(drop=True)
+    players25 = players[players['mpg'] >= 25.0].sort_values(by='team').reset_index(drop=True)
     ## split the .php ending for each player to get game log links..need it like trae-young.php, luka-doncic.php, etc
     phplist = []
     for i in range(len(players25.href)):

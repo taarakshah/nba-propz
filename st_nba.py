@@ -59,16 +59,6 @@ def get_today_slate():
     return pd.DataFrame({'away':away,'home':home, 'awayrec':awayrec, 'homerec':homerec, 'awayml':awayml, 'homeml':homeml})
 
 st.set_page_config(page_title='PROPZ v2.6.0', page_icon=':basketball:', layout="wide", initial_sidebar_state="auto", menu_items=None)
-st.write('<style>div.block-container{padding-top:0rem;}</style>', unsafe_allow_html=True)
-
-
-## load the gamelog
-
-gamelog = pd.read_csv('gamelog.csv')
-gamelog = fix_dates(gamelog)
-gamelog['HOME/AWAY'] = np.where(gamelog['OPP'].str.contains('@'), 'AWAY', 'HOME')
-
-st.markdown("<h1 style='text-align: center;'>NBA PROPZ 2.6.0</h1>", unsafe_allow_html=True)
 hide_menu_style = """
         <style>
         #MainMenu {visibility: hidden;}
@@ -77,6 +67,14 @@ hide_menu_style = """
 st.markdown(hide_menu_style, unsafe_allow_html=True)
 def convert_df(df):
     return df.to_csv(index=False).encode('utf-8')
+
+## load the gamelog
+
+gamelog = pd.read_csv('gamelog.csv')
+gamelog = fix_dates(gamelog)
+gamelog['HOME/AWAY'] = np.where(gamelog['OPP'].str.contains('@'), 'AWAY', 'HOME')
+
+st.markdown("<h1 style='text-align: center;'>NBA PROPZ 2.6.0</h1>", unsafe_allow_html=True)
 
 ## SIDEBAR / OPTIONS MENU
 st.sidebar.markdown("## Options Menu")
@@ -94,7 +92,7 @@ else:
 ## player option
 player_subset = st.sidebar.selectbox('Player', options=['Choose Player'] + player_list)
 
-st.markdown("<h2 style='text-align: center;'>Today's Slate</h2>", unsafe_allow_html=True)
+st.markdown("<h2 style='text-align: center;'>Upcoming Matchups</h2>", unsafe_allow_html=True)
 today = get_today_slate()
 
 st.markdown("<h6 style='text-align:center;'>(ML) (Record) Away Team @ Home Team (Record) (ML)", unsafe_allow_html=True)
