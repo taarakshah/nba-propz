@@ -3,8 +3,10 @@ import plotly.express as px
 import numpy as np
 import pandas as pd
 import requests
+import bs4
 from bs4 import BeautifulSoup
 import time
+import json
 
 def fix_dates(df):
     '''
@@ -58,7 +60,97 @@ def get_today_slate():
 
     return pd.DataFrame({'away':away,'home':home, 'awayrec':awayrec, 'homerec':homerec, 'awayml':awayml, 'homeml':homeml})
 
-st.set_page_config(page_title='PROPZ v2.6.0', page_icon=':basketball:', layout="wide", initial_sidebar_state="auto", menu_items=None)
+def action_scrape(sport=None, propnames=None):
+    fulldf = pd.DataFrame()
+    ## need header for access to site
+    headers = {'User-Agent': 'Mozilla/5.0'}
+    for propname in propnames:
+        urlbuild = 'https://www.actionnetwork.com/'+sport+'/props/'
+        url = urlbuild + propname
+        r = requests.get(url, headers=headers)
+        soup = BeautifulSoup(r.content, 'html.parser')
+        ## get json
+        parsed = soup.find_all('script')
+        jstext = parsed[-1].string
+        ## load entire json into pandas, drop unnecessary columns
+        data = json.loads(jstext)
+        #print( json.dumps(data, indent=2) )
+        df_js = pd.json_normalize(data)
+
+        ## get o/u corresponding value -- smaller corresponds to over, larger corresponds to under according to nba
+        ## checker:
+        #print(df_js.filter(regex='props.pageProps.initialMarketConfig.market.rules.options'))
+        cols = df_js.filter(regex='props.pageProps.initialMarketConfig.market.rules.options').columns.tolist()
+        ## remove prefix string, keep only the number, and save it to unique list to avoid dupes
+        try:
+            nums = []
+            for i in range(len(cols)):
+                nums.append(int(cols[i].replace('props.pageProps.initialMarketConfig.market.rules.options.', '')[0:2].replace('.','')))
+                nums = np.unique(nums).tolist()
+        except: pass
+
+        ## get name of prop page
+        stat = df_js['props.pageProps.SEOData.header'].values[0]
+
+        ## keep relevant columns now that we have o/u numbers, expand the json
+        keep = 'props.pageProps.initialMarketConfig.market.'
+        cols_to_keep = [keep+'books',keep+'teams',keep+'players']
+        df = df_js[cols_to_keep]
+        df = df.copy()
+        df.rename(columns={cols_to_keep[0]:'books', cols_to_keep[1]:'teams', cols_to_keep[2]:'players'}, inplace=True)
+
+        ## create odds df
+        odds = pd.json_normalize(df['books'][0], record_path='odds', meta='book_id')
+        odds = odds[odds.columns.drop(list(odds.filter(regex='deeplink')))]
+        # create o/u to be obvious -- its hidden in option type id -- smaller num corresponds to over, larger to under
+        try:
+            odds['ou'] = np.where(odds['option_type_id']==np.min(nums), 'over', 'under')
+        except: pass
+
+        ## get book names
+        book_ids = odds.book_id.unique()
+        bookdict= {}
+        for i in book_ids:
+            try:
+                book = df_js['props.pageProps.bookMap.{}.display_name'.format(i)].values[0]
+                if i not in bookdict:
+                    bookdict[i] = book
+            except: pass
+        ## exception for other book id
+        bookdict[15] = 'Best Odds'
+
+        teams = pd.json_normalize(df['teams'][0])
+        players = pd.json_normalize(df['players'][0])
+        books = pd.DataFrame(bookdict.items(), columns=['book_id', 'book_name'])
+
+        odds1 = odds.merge(books, on='book_id')
+        odds2 = odds1.merge(teams[['id','display_name']], left_on='team_id', right_on='id')
+        odds3 = odds2.merge(players[['id','full_name']], left_on='player_id', right_on='id')
+        df = odds3[odds3.columns.drop(list(odds.filter(regex='id')))]
+        df = df.drop(['id_x','id_y'], axis=1)
+        df['prop'] = propname
+        df = df.sort_values(by=['prop','full_name','book_name','is_best'], ascending=[True,True,True,False])
+        fulldf = pd.concat([fulldf, df], ignore_index=True)
+    return fulldf
+
+def gen_plotly(log, stat):
+    '''
+    Input: 'stat' is 'PTS','REB','AST','3PM','PRA'
+    -If any player is chosen, subset to only that player's trends
+    -x axis Dates, y axis is stat of choice
+    '''
+    color_dict = {'PTS':'#E41A1C', 'REB':'#3773B8', 'AST':'#4DAF4A', '3PM':'#FF7F00','PRA':'#984EA3'}
+    name_dict = {'PTS':'Points', 'REB':'Rebounds', 'AST':'Assists','3PM':'Threes','PRA':'Pts/Reb/Ast'}
+
+    fig = px.line(x = log['DATE'], y = log[stat], title=player_subset, labels={'x':'Date','y':name_dict[stat]})
+    fig['data'][0]['showlegend']=True
+    fig['data'][0]['name']=name_dict[stat]
+    fig['data'][0]['line']['color']=color_dict[stat]
+    fig.update_layout(hovermode='x unified')
+    st.plotly_chart(fig, use_container_width=True)
+
+
+st.set_page_config(page_title='PROPZ v3.0.0', page_icon=':basketball:', layout="wide", initial_sidebar_state="auto", menu_items=None)
 hide_menu_style = """
         <style>
         #MainMenu {visibility: hidden;}
@@ -74,7 +166,7 @@ gamelog = pd.read_csv('gamelog.csv')
 gamelog = fix_dates(gamelog)
 gamelog['HOME/AWAY'] = np.where(gamelog['OPP'].str.contains('@'), 'AWAY', 'HOME')
 
-st.markdown("<h1 style='text-align: center;'>NBA PROPZ 2.6.0</h1>", unsafe_allow_html=True)
+st.markdown("<h1 style='text-align: center;'>NBA PROPZ 3.0.0</h1>", unsafe_allow_html=True)
 
 ## SIDEBAR / OPTIONS MENU
 st.sidebar.markdown("## Options Menu")
@@ -109,21 +201,6 @@ with c1:
     if player_subset!='Choose Player':
         plotbox = st.sidebar.selectbox(label='Show Plots', options=['All Stats','Points','Rebounds','Assists','Threes','Pts/Reb/Ast'])
 
-## if any player is chosen, subset to only that player's trends
-## x-axis Dates, y-axis is stat of choice
-def gen_plotly(log, stat):
-    '''
-    Input: 'stat' is 'PTS','REB','AST','3PM','PRA'
-    '''
-    color_dict = {'PTS':'#E41A1C', 'REB':'#3773B8', 'AST':'#4DAF4A', '3PM':'#FF7F00','PRA':'#984EA3'}
-    name_dict = {'PTS':'Points', 'REB':'Rebounds', 'AST':'Assists','3PM':'Threes','PRA':'Pts/Reb/Ast'}
-
-    fig = px.line(x = log['DATE'], y = log[stat], title=player_subset, labels={'x':'Date','y':name_dict[stat]})
-    fig['data'][0]['showlegend']=True
-    fig['data'][0]['name']=name_dict[stat]
-    fig['data'][0]['line']['color']=color_dict[stat]
-    fig.update_layout(hovermode='x unified')
-    st.plotly_chart(fig, use_container_width=True)
 
 try:
     playerlog = gamelog[gamelog['NAME']==player_subset].sort_values(by='DATE')
@@ -145,6 +222,10 @@ try:
     if plotbox=='Pts/Reb/Ast': gen_plotly(playerlog, 'PRA')
 except: pass
 
+## get action data for NBA props
+nba_propnames = ['points', 'rebounds', 'assists', '3fgm', 'points-rebounds-assists']
+action = action_scrape(sport='nba', propnames=nba_propnames)
+st.dataframe(action)
 
 ## prop sliders
 thres_pts = st.sidebar.number_input('Points', value=19.5, step=1.0, help='Adjust threshold for points to compare prop trends.', format='%f')
