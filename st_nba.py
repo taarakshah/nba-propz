@@ -152,7 +152,7 @@ def gen_plotly(log, stat):
 ## set equivalencies for team / full name
 team_dict = {'ATL':'Hawks', 'BKN':'Nets', 'BOS':'Celtics', 'CHA':'Hornets', 'CHI':'Bulls', 'CLE':'Cavaliers', 'DAL':'Mavericks','DEN':'Nuggets','DET':'Pistons','GSW':'Warriors','HOU':'Rockets','IND':'Pacers','LAC':'Clippers','LAL':'Lakers','MEM':'Grizzlies','MIA':'Heat','MIL':'Bucks','MIN':'Timberwolves','NOR':'Pelicans','NYK':'Knicks','OKC':'Thunder','ORL':'Magic','PHI':'76ers','PHO':'Suns','POR':'Trail Blazers','SAC':'Kings','SAS':'Spurs','TOR':'Raptors','UTH':'Jazz','WAS':'Wizards'}
 
-st.set_page_config(page_title='PROPZ v3.5.0', page_icon=':basketball:', layout="wide", initial_sidebar_state="auto", menu_items=None)
+st.set_page_config(page_title='PROPZ v4.0.0', page_icon=':basketball:', layout="wide", initial_sidebar_state="auto", menu_items=None)
 hide_menu_style = """
         <style>
         #MainMenu {visibility: hidden;}
@@ -168,7 +168,7 @@ gamelog = pd.read_csv('gamelog.csv')
 gamelog = fix_dates(gamelog)
 gamelog['HOME/AWAY'] = np.where(gamelog['OPP'].str.contains('@'), 'AWAY', 'HOME')
 
-st.markdown("<h1 style='text-align: center;'>NBA PROPZ 3.5.0</h1>", unsafe_allow_html=True)
+st.markdown("<h1 style='text-align: center;'>NBA PROPZ 4.0.0</h1>", unsafe_allow_html=True)
 
 ## SIDEBAR / OPTIONS MENU
 st.sidebar.markdown("## Options Menu")
@@ -269,7 +269,7 @@ elif (book_opt!='All') & (team_subset!='Choose Team') & (player_subset=='Choose 
 elif (book_opt!='All') & (player_subset!='Choose Player'):
     temp = action_display[ (action_display['book_name']==book_opt) & (action_display['full_name']==player_subset) ]
     st.dataframe(temp)
-    
+
     try:
         thres['pts'] = temp[temp['prop']=='points']['value'].values[0]
         thres['reb'] = temp[temp['prop']=='rebounds']['value'].values[0]
