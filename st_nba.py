@@ -149,6 +149,8 @@ def gen_plotly(log, stat):
     fig.update_layout(hovermode='x unified')
     st.plotly_chart(fig, use_container_width=True)
 
+## set equivalencies for team / full name
+team_dict = {'ATL':'Hawks', 'BKN':'Nets', 'BOS':'Celtics', 'CHA':'Hornets', 'CHI':'Bulls', 'CLE':'Cavaliers', 'DAL':'Mavericks','DEN':'Nuggets','DET':'Pistons','GSW':'Warriors','HOU':'Rockets','IND':'Pacers','LAC':'Clippers','LAL':'Lakers','MEM':'Grizzlies','MIA':'Heat','MIL':'Bucks','MIN':'Timberwolves','NOR':'Pelicans','NYK':'Knicks','OKC':'Thunder','ORL':'Magic','PHI':'76ers','PHO':'Suns','POR':'Trail Blazers','SAC':'Kings','SAS':'Spurs','TOR':'Raptors','UTH':'Jazz','WAS':'Wizards'}
 
 st.set_page_config(page_title='PROPZ v3.0.0', page_icon=':basketball:', layout="wide", initial_sidebar_state="auto", menu_items=None)
 hide_menu_style = """
@@ -201,7 +203,6 @@ with c1:
     if player_subset!='Choose Player':
         plotbox = st.sidebar.selectbox(label='Show Plots', options=['All Stats','Points','Rebounds','Assists','Threes','Pts/Reb/Ast'])
 
-
 try:
     playerlog = gamelog[gamelog['NAME']==player_subset].sort_values(by='DATE')
     if plotbox=='All Stats':
@@ -224,8 +225,21 @@ except: pass
 
 ## get action data for NBA props
 nba_propnames = ['points', 'rebounds', 'assists', '3fgm', 'points-rebounds-assists']
+name_dict = {'points':''}
 action = action_scrape(sport='nba', propnames=nba_propnames)
-st.dataframe(action)
+action_display = action[['edge','prop','ou','value','money','full_name','display_name','grade','implied_value','projected_value','bet_quality','book_name',]]
+
+st.subheader('Action Edge Data')
+
+c1, c2 = st.columns([1,5])
+with c1:
+    st.write('To the right is data from Action Network on player edges and lines across books. Choose your book, or "all", below to update the data.')
+    book_opt = st.radio('Select Book', options=['All'] + action['book_name'].unique().tolist()[1:])
+with c2:
+    if book_opt=='All':
+        st.dataframe(action_display)
+    else:
+        st.dataframe(action_display[action_display['book_name']==book_opt])
 
 ## prop sliders
 thres_pts = st.sidebar.number_input('Points', value=19.5, step=1.0, help='Adjust threshold for points to compare prop trends.', format='%f')
