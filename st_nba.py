@@ -152,7 +152,7 @@ def gen_plotly(log, stat):
 ## set equivalencies for team / full name
 team_dict = {'ATL':'Hawks', 'BKN':'Nets', 'BOS':'Celtics', 'CHA':'Hornets', 'CHI':'Bulls', 'CLE':'Cavaliers', 'DAL':'Mavericks','DEN':'Nuggets','DET':'Pistons','GSW':'Warriors','HOU':'Rockets','IND':'Pacers','LAC':'Clippers','LAL':'Lakers','MEM':'Grizzlies','MIA':'Heat','MIL':'Bucks','MIN':'Timberwolves','NOR':'Pelicans','NYK':'Knicks','OKC':'Thunder','ORL':'Magic','PHI':'76ers','PHO':'Suns','POR':'Trail Blazers','SAC':'Kings','SAS':'Spurs','TOR':'Raptors','UTH':'Jazz','WAS':'Wizards'}
 
-st.set_page_config(page_title='PROPZ v3.0.0', page_icon=':basketball:', layout="wide", initial_sidebar_state="auto", menu_items=None)
+st.set_page_config(page_title='PROPZ v3.5.0', page_icon=':basketball:', layout="wide", initial_sidebar_state="auto", menu_items=None)
 hide_menu_style = """
         <style>
         #MainMenu {visibility: hidden;}
@@ -168,7 +168,7 @@ gamelog = pd.read_csv('gamelog.csv')
 gamelog = fix_dates(gamelog)
 gamelog['HOME/AWAY'] = np.where(gamelog['OPP'].str.contains('@'), 'AWAY', 'HOME')
 
-st.markdown("<h1 style='text-align: center;'>NBA PROPZ 3.0.0</h1>", unsafe_allow_html=True)
+st.markdown("<h1 style='text-align: center;'>NBA PROPZ 3.5.0</h1>", unsafe_allow_html=True)
 
 ## SIDEBAR / OPTIONS MENU
 st.sidebar.markdown("## Options Menu")
@@ -231,22 +231,66 @@ action_display = action[['edge','prop','ou','value','money','full_name','display
 
 st.subheader('Action Edge Data')
 
-c1, c2 = st.columns([1,5])
+c1, c2 = st.columns(2)
 with c1:
-    st.write('To the right is data from Action Network on player edges and lines across books. Choose your book, or "all", below to update the data.')
-    book_opt = st.radio('Select Book', options=['All'] + action['book_name'].unique().tolist()[1:])
+    st.write('Below is data from Action Network on player edges and lines across books. Choose your book, or "all", to update the data. Choosing a specific team or player will also update the data to only show that team or player. If a team is not playing today, the data will come up empty. Click on a column to sort by that column.')
 with c2:
-    if book_opt=='All':
-        st.dataframe(action_display)
-    else:
-        st.dataframe(action_display[action_display['book_name']==book_opt])
+    book_opt = st.selectbox('Select Book', options=['All'] + action['book_name'].unique().tolist()[1:])
 
-## prop sliders
-thres_pts = st.sidebar.number_input('Points', value=19.5, step=1.0, help='Adjust threshold for points to compare prop trends.', format='%f')
-thres_reb = st.sidebar.number_input('Rebounds', value=5.5, step=1.0, help='Adjust threshold for rebounds to compare prop trends.', format='%f')
-thres_ast = st.sidebar.number_input('Assists', value=3.5, step=1.0, help='Adjust threshold for assists to compare prop trends.', format='%f')
-thres_3pm = st.sidebar.number_input('Threes', value=1.5, step=1.0, help='Adjust threshold for threes to compare prop trends.', format='%f')
-thres_pra = st.sidebar.number_input('Pts/Reb/Ast', value=24.5, step=1.0, help='Adjust threshold for PRA to compare prop trends.', format='%f')
+### cases to display
+## set thresholds, update them if certain player is chosen in action data
+thres = {'pts':19.5,'reb':5.5,'ast':3.5,'3pm':1.5,'pra':24.5}
+## all books, all teams, all players
+if (book_opt=='All') & (team_subset=='Choose Team') & (player_subset=='Choose Player'):
+    ## all books, all teams, all players
+    st.dataframe(action_display)
+## all books, certain team, all players
+elif (book_opt=='All') & (team_subset!='Choose Team') & (player_subset=='Choose Player'):
+    st.dataframe(action_display[action_display['display_name']==team_dict[team_subset]])
+## all books, certain player ################################################################## UPDATES THRESHOLDS
+elif (book_opt=='All') & (player_subset!='Choose Player'):
+    temp = action_display[action_display['full_name']==player_subset]
+    st.dataframe(temp)
+
+    try:
+        thres['pts'] = temp[temp['prop']=='points']['value'].values[0]
+        thres['reb'] = temp[temp['prop']=='rebounds']['value'].values[0]
+        thres['ast'] = temp[temp['prop']=='assists']['value'].values[0]
+        thres['3pm'] = temp[temp['prop']=='3fgm']['value'].values[0]
+        thres['pra'] = temp[temp['prop']=='points-rebounds-assists']['value'].values[0]
+    except: pass
+## certain book, all teams, all players
+elif (book_opt!='All') & (team_subset=='Choose Team') & (player_subset=='Choose Player'):
+    st.dataframe(action_display[action_display['book_name']==book_opt])
+## certain book, certain team, all players
+elif (book_opt!='All') & (team_subset!='Choose Team') & (player_subset=='Choose Player'):
+    st.dataframe(action_display[ (action_display['book_name']==book_opt) & (action_display['display_name']==team_dict[team_subset])])
+## certain book, certain player ############################################################## UPDATES THRESHOLDS
+elif (book_opt!='All') & (player_subset!='Choose Player'):
+    temp = action_display[ (action_display['book_name']==book_opt) & (action_display['full_name']==player_subset) ]
+    st.dataframe(temp)
+    
+    try:
+        thres['pts'] = temp[temp['prop']=='points']['value'].values[0]
+        thres['reb'] = temp[temp['prop']=='rebounds']['value'].values[0]
+        thres['ast'] = temp[temp['prop']=='assists']['value'].values[0]
+        thres['3pm'] = temp[temp['prop']=='3fgm']['value'].values[0]
+        thres['pra'] = temp[temp['prop']=='points-rebounds-assists']['value'].values[0]
+    except: pass
+else:
+    st.write('What fuckin option combo is this? Anyway, something is wrong, here is the full data.')
+    st.dataframe(action_display)
+    
+
+## PROP SLIDERS
+## if player is in the action data, set the default value to their current line based on selected book
+## otherwise, default is used
+
+thres_pts = st.sidebar.number_input('Points', value=thres['pts'], step=1.0, help='Adjust threshold for points to compare prop trends.', format='%f')
+thres_reb = st.sidebar.number_input('Rebounds', value=thres['reb'], step=1.0, help='Adjust threshold for rebounds to compare prop trends.', format='%f')
+thres_ast = st.sidebar.number_input('Assists', value=thres['ast'], step=1.0, help='Adjust threshold for assists to compare prop trends.', format='%f')
+thres_3pm = st.sidebar.number_input('Threes', value=thres['3pm'], step=1.0, help='Adjust threshold for threes to compare prop trends.', format='%f')
+thres_pra = st.sidebar.number_input('Pts/Reb/Ast', value=thres['pra'], step=1.0, help='Adjust threshold for PRA to compare prop trends.', format='%f')
 
 ## Print trends
 if player_subset != 'Choose Player':
