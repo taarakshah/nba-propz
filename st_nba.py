@@ -20,7 +20,7 @@ def fix_dates(df):
 
     date_df = df['DATE'].str.split(expand=True)
     date_df.rename(columns={0:'month',1:'day'}, inplace=True)
-    date_df['year'] = np.where(date_df['month'].isin(months22), '2022', '2023')
+    date_df['year'] = np.where(date_df['month'].isin(months22), '2023', '2024')
     date_df['full'] = date_df['month'] + ' ' + date_df['day'] + ', ' + date_df['year']
     date_df['DATE'] = pd.to_datetime(date_df['full'])
 
