@@ -5,3 +5,4 @@ plotly.express
 requests
 bs4
 gitpython
+tqdm
