@@ -15,12 +15,11 @@ def fix_dates(df):
     ## fixing date column...
     df['DATE'] = df['DATE'].str[4:]
 
-    ## append 2022 or 2023 to DATE
-    months22 = ['Oct', 'Nov', 'Dec']
+    year = time.strftime("%Y")
 
     date_df = df['DATE'].str.split(expand=True)
     date_df.rename(columns={0:'month',1:'day'}, inplace=True)
-    date_df['year'] = np.where(date_df['month'].isin(months22), '2023', '2024')
+    date_df['year'] = year
     date_df['full'] = date_df['month'] + ' ' + date_df['day'] + ', ' + date_df['year']
     date_df['DATE'] = pd.to_datetime(date_df['full'])
 
