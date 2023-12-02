@@ -39,15 +39,15 @@ def get_new_data():
     ## make it a dataframe
     players = pd.DataFrame(list(zip(names, teams, hrefs, mpgs)), columns=['name','team', 'href','mpg'])
 
-    players25 = players[players['mpg'] >= 25.0].sort_values(by='team').reset_index(drop=True)
+    players5 = players[players['mpg'] >= 5.0].sort_values(by='team').reset_index(drop=True)
     ## split the .php ending for each player to get game log links..need it like trae-young.php, luka-doncic.php, etc
     phplist = []
-    for i in range(len(players25.href)):
-        php = players25['href'].str.split('/')[i][3]
+    for i in range(len(players5.href)):
+        php = players5['href'].str.split('/')[i][3]
         phplist.append(php)
     ## add it to df
-    players25['php'] = phplist
-    players = players25.drop(['href','mpg'], axis=1)
+    players5['php'] = phplist
+    players = players5.drop(['href','mpg'], axis=1)
 
     ## Get the URL and HTML content of the game log page
     urlbuild = 'https://www.fantasypros.com/nba/games/' ## need to + the "php" column for each player from previous dataframe, done in loop
