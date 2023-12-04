@@ -62,7 +62,7 @@ def get_today_slate():
 def action_scrape(sport=None, propnames=None):
     fulldf = pd.DataFrame()
     ## need header for access to site
-    headers = {'User-Agent': 'Mozilla/5.0'}
+    headers = { 'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_10_1) AppleWebKit/537.36 \ (KHTML, like Gecko) Chrome/39.0.2171.95 Safari/537.36'}
     for propname in propnames:
         urlbuild = 'https://www.actionnetwork.com/'+sport+'/props/'
         url = urlbuild + propname
@@ -94,6 +94,11 @@ def action_scrape(sport=None, propnames=None):
         ## keep relevant columns now that we have o/u numbers, expand the json
         keep = 'props.pageProps.initialMarketConfig.market.'
         cols_to_keep = [keep+'books',keep+'teams',keep+'players']
+
+        ## check if the cols_to_keep index is in the df_js, if not, then return null
+        if (cols_to_keep[0] not in df_js.columns) | (cols_to_keep[1] not in df_js.columns) | (cols_to_keep[2] not in df_js.columns):
+            return None
+
         df = df_js[cols_to_keep]
         df = df.copy()
         df.rename(columns={cols_to_keep[0]:'books', cols_to_keep[1]:'teams', cols_to_keep[2]:'players'}, inplace=True)
@@ -230,59 +235,64 @@ except: pass
 nba_propnames = ['points', 'rebounds', 'assists', '3fgm', 'points-rebounds-assists']
 name_dict = {'points':''}
 action = action_scrape(sport='nba', propnames=nba_propnames)
-action_display = action[['edge','prop','ou','value','money','full_name','display_name','grade','implied_value','projected_value','bet_quality','book_name',]]
-
-st.subheader('Action Edge Data')
-
-c1, c2 = st.columns(2)
-with c1:
-    st.write('Below is data from Action Network on player edges and lines across books. Choose your book, or "all", to update the data. Choosing a specific team or player will also update the data to only show that team or player. If a team is not playing today, the data will come up empty. Click on a column to sort by that column.')
-with c2:
-    book_opt = st.selectbox('Select Book', options=['All'] + action['book_name'].unique().tolist()[1:])
-
-### cases to display
-## set thresholds, update them if certain player is chosen in action data
 thres = {'pts':19.5,'reb':5.5,'ast':3.5,'3pm':1.5,'pra':24.5}
-## all books, all teams, all players
-if (book_opt=='All') & (team_subset=='Choose Team') & (player_subset=='Choose Player'):
-    ## all books, all teams, all players
-    st.dataframe(action_display)
-## all books, certain team, all players
-elif (book_opt=='All') & (team_subset!='Choose Team') & (player_subset=='Choose Player'):
-    st.dataframe(action_display[action_display['display_name']==team_dict[team_subset]])
-## all books, certain player ################################################################## UPDATES THRESHOLDS
-elif (book_opt=='All') & (player_subset!='Choose Player'):
-    temp = action_display[action_display['full_name']==player_subset]
-    st.dataframe(temp)
 
-    try:
-        thres['pts'] = temp[temp['prop']=='points']['value'].values[0]
-        thres['reb'] = temp[temp['prop']=='rebounds']['value'].values[0]
-        thres['ast'] = temp[temp['prop']=='assists']['value'].values[0]
-        thres['3pm'] = temp[temp['prop']=='3fgm']['value'].values[0]
-        thres['pra'] = temp[temp['prop']=='points-rebounds-assists']['value'].values[0]
-    except: pass
-## certain book, all teams, all players
-elif (book_opt!='All') & (team_subset=='Choose Team') & (player_subset=='Choose Player'):
-    st.dataframe(action_display[action_display['book_name']==book_opt])
-## certain book, certain team, all players
-elif (book_opt!='All') & (team_subset!='Choose Team') & (player_subset=='Choose Player'):
-    st.dataframe(action_display[ (action_display['book_name']==book_opt) & (action_display['display_name']==team_dict[team_subset])])
-## certain book, certain player ############################################################## UPDATES THRESHOLDS
-elif (book_opt!='All') & (player_subset!='Choose Player'):
-    temp = action_display[ (action_display['book_name']==book_opt) & (action_display['full_name']==player_subset) ]
-    st.dataframe(temp)
-
-    try:
-        thres['pts'] = temp[temp['prop']=='points']['value'].values[0]
-        thres['reb'] = temp[temp['prop']=='rebounds']['value'].values[0]
-        thres['ast'] = temp[temp['prop']=='assists']['value'].values[0]
-        thres['3pm'] = temp[temp['prop']=='3fgm']['value'].values[0]
-        thres['pra'] = temp[temp['prop']=='points-rebounds-assists']['value'].values[0]
-    except: pass
+if action is None:
+    st.write('No data found for NBA props. Please check back later.')
 else:
-    st.write('What fuckin option combo is this? Anyway, something is wrong, here is the full data.')
-    st.dataframe(action_display)
+  action_display = action[['edge','prop','ou','value','money','full_name','display_name','grade','implied_value','projected_value','bet_quality','book_name',]]
+
+  st.subheader('Action Edge Data')
+
+  c1, c2 = st.columns(2)
+  with c1:
+      st.write('Below is data from Action Network on player edges and lines across books. Choose your book, or "all", to update the data. Choosing a specific team or player will also update the data to only show that team or player. If a team is not playing today, the data will come up empty. Click on a column to sort by that column.')
+  with c2:
+      book_opt = st.selectbox('Select Book', options=['All'] + action['book_name'].unique().tolist()[1:])
+
+  ### cases to display
+  ## set thresholds, update them if certain player is chosen in action data
+
+  ## all books, all teams, all players
+  if (book_opt=='All') & (team_subset=='Choose Team') & (player_subset=='Choose Player'):
+      ## all books, all teams, all players
+      st.dataframe(action_display)
+  ## all books, certain team, all players
+  elif (book_opt=='All') & (team_subset!='Choose Team') & (player_subset=='Choose Player'):
+      st.dataframe(action_display[action_display['display_name']==team_dict[team_subset]])
+  ## all books, certain player ################################################################## UPDATES THRESHOLDS
+  elif (book_opt=='All') & (player_subset!='Choose Player'):
+      temp = action_display[action_display['full_name']==player_subset]
+      st.dataframe(temp)
+
+      try:
+          thres['pts'] = temp[temp['prop']=='points']['value'].values[0]
+          thres['reb'] = temp[temp['prop']=='rebounds']['value'].values[0]
+          thres['ast'] = temp[temp['prop']=='assists']['value'].values[0]
+          thres['3pm'] = temp[temp['prop']=='3fgm']['value'].values[0]
+          thres['pra'] = temp[temp['prop']=='points-rebounds-assists']['value'].values[0]
+      except: pass
+  ## certain book, all teams, all players
+  elif (book_opt!='All') & (team_subset=='Choose Team') & (player_subset=='Choose Player'):
+      st.dataframe(action_display[action_display['book_name']==book_opt])
+  ## certain book, certain team, all players
+  elif (book_opt!='All') & (team_subset!='Choose Team') & (player_subset=='Choose Player'):
+      st.dataframe(action_display[ (action_display['book_name']==book_opt) & (action_display['display_name']==team_dict[team_subset])])
+  ## certain book, certain player ############################################################## UPDATES THRESHOLDS
+  elif (book_opt!='All') & (player_subset!='Choose Player'):
+      temp = action_display[ (action_display['book_name']==book_opt) & (action_display['full_name']==player_subset) ]
+      st.dataframe(temp)
+
+      try:
+          thres['pts'] = temp[temp['prop']=='points']['value'].values[0]
+          thres['reb'] = temp[temp['prop']=='rebounds']['value'].values[0]
+          thres['ast'] = temp[temp['prop']=='assists']['value'].values[0]
+          thres['3pm'] = temp[temp['prop']=='3fgm']['value'].values[0]
+          thres['pra'] = temp[temp['prop']=='points-rebounds-assists']['value'].values[0]
+      except: pass
+  else:
+      st.write('What fuckin option combo is this? Anyway, something is wrong, here is the full data.')
+      st.dataframe(action_display)
     
 
 ## PROP SLIDERS
