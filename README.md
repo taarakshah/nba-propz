@@ -1,13 +1,13 @@
 # nba-propz
-NBA Player Prop Analysis Tool
+NBA Player Prop Visualization Tool
 
 # Release Notes (PROPZ v2.4.0)
-In this README is the most current iteration of PROPZ (Proper Research of PlayerZ), an NBA player prop research tool.
+In this README is the most current iteration of PROPZ, an NBA player prop research tool.
 
 ## Please visit this link to access:
 ## https://nba-propz.streamlit.app/
 
-PROPZ is a Python program-turned-dashboard that collects game logs from every NBA player who averages more than 25mpg this season and checks how often they hit very achievable, low-odds lines for use in your parlay builders.
+PROPZ is a Python program-turned-dashboard that collects game logs from every NBA player who averages more than 25mpg this season and checks how often they hit  player prop betting lines across different websites.
 
 # Features included in release v2.0.0 onward:
 - All players who average more than 25 minutes per game
